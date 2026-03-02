@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cc-lang — Language Breakdown for Claude Code</title>
+  <meta name="description" content="See which programming languages Claude Code works with most. Edit counts, new file counts, and edit/create ratio by language. Drag in your ~/.claude folder.">
+  <meta property="og:title" content="cc-lang — What languages does Claude Code use for you?">
+  <meta property="og:description" content="My #1 Claude Code language: GDScript (29% of all file operations). What's yours?">
+  <meta property="og:url" content="https://yurukusa.github.io/cc-lang/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@yurukusa_dev">
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e;
+      --red: #ff7b72; --green: #56d364; --yellow: #e3b341;
+      --cyan: #58d8f0; --orange: #ffa657; --purple: #bc8cff; --blue: #79c0ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+    .container { max-width: 820px; margin: 0 auto; padding: 48px 20px; }
+    h1 { font-size: 2rem; font-weight: 800; color: var(--green); margin-bottom: 8px; font-family: monospace; }
+    .subtitle { color: var(--muted); margin-bottom: 40px; }
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 14px; padding: 48px 32px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 32px;
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--green); background: rgba(86,211,100,0.04); }
+    .drop-zone-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .drop-zone-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
+    .drop-zone-sub { font-size: 0.85rem; color: var(--muted); }
+    .btn { background: var(--green); color: #0d1117; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; margin-top: 16px; }
+    #fileInput { display: none; }
+    .result { display: none; }
+    .result.visible { display: block; }
+
+    .hero { text-align: center; padding: 32px; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+    .hero-lang { font-size: 2.4rem; font-weight: 900; font-family: monospace; }
+    .hero-sub { color: var(--muted); margin-top: 6px; }
+    .hero-pct { font-size: 3.5rem; font-weight: 900; font-family: monospace; line-height: 1; margin: 10px 0; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; }
+    .stat-n { font-size: 1.8rem; font-weight: 800; font-family: monospace; color: var(--green); }
+    .stat-l { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+    .section.full { grid-column: 1 / -1; }
+    .section-title { font-size: 0.75rem; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 14px; }
+
+    .lang-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; font-size: 0.82rem; }
+    .lang-name { width: 100px; flex-shrink: 0; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-wrap { flex: 1; background: #010409; border-radius: 4px; height: 7px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+    .lang-count { width: 48px; text-align: right; font-family: monospace; font-size: 0.75rem; color: var(--muted); }
+
+    .ratio-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .ratio-row:last-child { border-bottom: none; }
+    .ratio-lang { font-family: monospace; font-weight: 600; }
+    .ratio-detail { color: var(--muted); font-size: 0.78rem; }
+    .ratio-val { font-family: monospace; font-weight: 700; }
+
+    .progress { color: var(--muted); font-size: 0.88rem; text-align: center; padding: 20px; }
+    footer { text-align: center; color: var(--muted); font-size: 0.78rem; margin-top: 48px; }
+    footer a { color: var(--cyan); text-decoration: none; }
+    @media (max-width: 560px) {
+      .two-col { grid-template-columns: 1fr; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>cc-lang</h1>
+  <p class="subtitle">Which programming languages does Claude Code work with most in your sessions?</p>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="drop-zone-icon">💻</div>
+    <div class="drop-zone-title">Drop your <code>~/.claude</code> folder here</div>
+    <div class="drop-zone-sub">Or click to browse — nothing is uploaded</div>
+    <button class="btn" onclick="document.getElementById('fileInput').click()">Select folder</button>
+  </div>
+  <input type="file" id="fileInput" webkitdirectory multiple>
+
+  <div class="progress" id="progress" style="display:none">Scanning file edits...</div>
+
+  <div class="result" id="result">
+    <div class="hero">
+      <div style="font-size:0.75rem;color:var(--muted);font-weight:600;letter-spacing:0.5px;margin-bottom:8px;">YOUR PRIMARY LANGUAGE</div>
+      <div class="hero-lang" id="heroLang" style="color:var(--green)">—</div>
+      <div class="hero-pct" id="heroPct" style="color:var(--green)">—</div>
+      <div class="hero-sub">of all file operations</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-n" id="statEdit">—</div><div class="stat-l">Total edits</div></div>
+      <div class="stat"><div class="stat-n" id="statNew">—</div><div class="stat-l">New files created</div></div>
+      <div class="stat"><div class="stat-n" id="statLangs">—</div><div class="stat-l">Languages active</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="section">
+        <div class="section-title">▸ EDITS BY LANGUAGE</div>
+        <div id="editRows"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">▸ NEW FILES BY LANGUAGE</div>
+        <div id="writeRows"></div>
+      </div>
+    </div>
+
+    <div class="section full">
+      <div class="section-title">▸ EDIT vs. NEW FILE RATIO (edit ÷ new)</div>
+      <div id="ratioRows"></div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        High ratio = mostly editing existing code · Low ratio = mostly creating new files
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Part of <a href="https://yurukusa.github.io/cc-toolkit/">cc-toolkit</a> — 62 free tools for Claude Code</p>
+    <p style="margin-top:6px;"><a href="https://github.com/yurukusa/cc-lang">GitHub</a> · <code>npx cc-lang</code></p>
+  </footer>
+</div>
+
+<script>
+const EXT_TO_LANG = {
+  '.py': 'Python', '.pyi': 'Python',
+  '.js': 'JavaScript', '.mjs': 'JavaScript', '.cjs': 'JavaScript', '.jsx': 'JavaScript',
+  '.ts': 'TypeScript', '.tsx': 'TypeScript',
+  '.gd': 'GDScript',
+  '.md': 'Markdown', '.mdx': 'Markdown',
+  '.html': 'HTML', '.htm': 'HTML',
+  '.css': 'CSS', '.scss': 'CSS', '.sass': 'CSS',
+  '.yaml': 'YAML', '.yml': 'YAML',
+  '.json': 'JSON', '.jsonc': 'JSON',
+  '.sh': 'Shell', '.bash': 'Shell', '.zsh': 'Shell',
+  '.rs': 'Rust', '.go': 'Go', '.java': 'Java', '.rb': 'Ruby',
+  '.php': 'PHP', '.lua': 'Lua',
+  '.tscn': 'Godot', '.tres': 'Godot', '.godot': 'Godot',
+  '.ps1': 'PowerShell',
+  '.cpp': 'C++', '.cc': 'C++', '.h': 'C/C++', '.c': 'C',
+  '.cs': 'C#', '.swift': 'Swift', '.kt': 'Kotlin',
+  '.vue': 'Vue', '.svelte': 'Svelte',
+  '.toml': 'TOML', '.sql': 'SQL', '.txt': 'Text',
+  '.gitignore': 'Config', '.env': 'Config', '.conf': 'Config',
+};
+
+const LANG_COLORS = {
+  Python: '#e3b341', JavaScript: '#e3b341', TypeScript: '#79c0ff',
+  GDScript: '#58d8f0', Markdown: '#56d364', HTML: '#ff7b72',
+  CSS: '#bc8cff', Shell: '#8b949e', Rust: '#ff7b72',
+  Go: '#58d8f0', 'C#': '#bc8cff', Default: '#8b949e',
+};
+
+function langColor(lang) { return LANG_COLORS[lang] || LANG_COLORS.Default; }
+
+function extToLang(path) {
+  const bn = path.split('/').pop() || '';
+  if (!bn.includes('.')) return null;
+  const ext = '.' + bn.split('.').pop().toLowerCase();
+  return EXT_TO_LANG[ext] || null;
+}
+
+async function processFiles(files) {
+  document.getElementById('progress').style.display = 'block';
+  document.getElementById('result').classList.remove('visible');
+
+  const jsonlFiles = [...files].filter(f =>
+    f.name.endsWith('.jsonl') && f.webkitRelativePath.includes('/projects/')
+  );
+
+  const editByLang = {}, writeByLang = {};
+
+  for (let i = 0; i < jsonlFiles.length; i++) {
+    if (i % 50 === 0) {
+      document.getElementById('progress').textContent = `Scanning ${i}/${jsonlFiles.length} files...`;
+      await new Promise(r => setTimeout(r, 0));
+    }
+    try {
+      const text = await jsonlFiles[i].text();
+      const lines = text.split('\n').filter(l => l.includes('"tool_use"') && (l.includes('"Edit"') || l.includes('"Write"')));
+      for (const line of lines) {
+        let data; try { data = JSON.parse(line); } catch { continue; }
+        const msg = data.message || data;
+        if (!msg || !Array.isArray(msg.content)) continue;
+        for (const item of msg.content) {
+          if (!item || item.type !== 'tool_use') continue;
+          if (item.name !== 'Edit' && item.name !== 'Write') continue;
+          const path = (item.input || {}).file_path || '';
+          const lang = extToLang(path);
+          if (!lang) continue;
+          if (item.name === 'Edit') editByLang[lang] = (editByLang[lang] || 0) + 1;
+          else writeByLang[lang] = (writeByLang[lang] || 0) + 1;
+        }
+      }
+    } catch {}
+  }
+
+  document.getElementById('progress').style.display = 'none';
+  renderResult(editByLang, writeByLang);
+}
+
+function renderResult(editByLang, writeByLang) {
+  const totalEdit = Object.values(editByLang).reduce((s, v) => s + v, 0);
+  const totalWrite = Object.values(writeByLang).reduce((s, v) => s + v, 0);
+  const totalOps = totalEdit + totalWrite;
+
+  // Combined
+  const allLangs = new Set([...Object.keys(editByLang), ...Object.keys(writeByLang)]);
+  const combined = [...allLangs].map(lang => ({
+    lang, edits: editByLang[lang] || 0, writes: writeByLang[lang] || 0,
+    total: (editByLang[lang] || 0) + (writeByLang[lang] || 0),
+  })).sort((a, b) => b.total - a.total);
+
+  const topLang = combined[0];
+  document.getElementById('heroLang').textContent = topLang ? topLang.lang : '—';
+  document.getElementById('heroLang').style.color = topLang ? langColor(topLang.lang) : 'var(--green)';
+  document.getElementById('heroPct').textContent = topLang ? (topLang.total / totalOps * 100).toFixed(1) + '%' : '—';
+  document.getElementById('heroPct').style.color = topLang ? langColor(topLang.lang) : 'var(--green)';
+  document.getElementById('statEdit').textContent = totalEdit.toLocaleString();
+  document.getElementById('statNew').textContent = totalWrite.toLocaleString();
+  document.getElementById('statLangs').textContent = combined.filter(l => l.total > 0).length;
+
+  const fmtRow = (lang, n, max, total) => {
+    const color = langColor(lang);
+    return `<div class="lang-row">
+      <div class="lang-name" style="color:${color}" title="${lang}">${lang}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(n/max*100)}%;background:${color}"></div></div>
+      <div class="lang-count">${n.toLocaleString()}</div>
+    </div>`;
+  };
+
+  const editList = Object.entries(editByLang).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const writeList = Object.entries(writeByLang).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxEdit = editList.length > 0 ? editList[0][1] : 1;
+  const maxWrite = writeList.length > 0 ? writeList[0][1] : 1;
+
+  document.getElementById('editRows').innerHTML = editList.map(([l, n]) => fmtRow(l, n, maxEdit, totalEdit)).join('') || '<div style="color:var(--muted)">No data</div>';
+  document.getElementById('writeRows').innerHTML = writeList.map(([l, n]) => fmtRow(l, n, maxWrite, totalWrite)).join('') || '<div style="color:var(--muted)">No data</div>';
+
+  // Ratio table
+  document.getElementById('ratioRows').innerHTML = combined.slice(0, 8).map(({ lang, edits, writes }) => {
+    const ratio = writes > 0 ? (edits / writes).toFixed(1) + ':1' : '∞';
+    const style = edits > writes ? `color:var(--yellow)` : `color:var(--cyan)`;
+    const hint = edits > writes ? 'iterating' : 'building';
+    return `<div class="ratio-row">
+      <span class="ratio-lang" style="color:${langColor(lang)}">${lang}</span>
+      <span class="ratio-detail">${edits.toLocaleString()} edits / ${writes.toLocaleString()} new</span>
+      <span class="ratio-val" style="${style}">${ratio} <span style="color:var(--muted);font-size:0.75rem;">(${hint})</span></span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('result').classList.add('visible');
+}
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) processFiles(e.dataTransfer.files);
+});
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files.length) processFiles(e.target.files);
+});
+</script>
+</body>
+</html>

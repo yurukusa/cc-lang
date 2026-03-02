@@ -1,0 +1,26 @@
+{
+  "name": "cc-lang",
+  "version": "1.0.0",
+  "description": "See which programming languages Claude Code works with most — edits, new files, and ratios by language",
+  "type": "module",
+  "bin": {
+    "cc-lang": "./cli.mjs"
+  },
+  "scripts": {
+    "start": "node cli.mjs"
+  },
+  "keywords": [
+    "claude-code",
+    "claude",
+    "ai",
+    "developer-tools",
+    "analytics",
+    "programming-languages",
+    "statistics"
+  ],
+  "author": "yurukusa",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
