@@ -1,7 +1,7 @@
 {
   "name": "cc-lang",
   "version": "1.0.0",
-  "description": "See which programming languages Claude Code works with most — edits, new files, and ratios by language",
+  "description": "See which programming languages Claude Code works with most \u2014 edits, new files, and ratios by language",
   "type": "module",
   "bin": {
     "cc-lang": "./cli.mjs"
@@ -22,5 +22,6 @@
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "homepage": "https://github.com/yurukusa/cc-lang#readme"
 }
